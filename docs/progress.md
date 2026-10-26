@@ -7,8 +7,8 @@
 | **Phase 1** | Environment setup, repository structure, health-check endpoint | 🟢 Completed |
 | **Phase 2** | Database schema design, migrations, seed data & connection pool | 🟢 Completed |
 | **Phase 3** | Authentication, user accounts, JWT, password hashing & RBAC | 🟢 Completed |
-| **Phase 4** | Product & category APIs + Customer storefront setup | 🟡 Next Up |
-| **Phase 5** | Product search, filters, pagination, details, cart & wishlist | ⚪ Pending |
+| **Phase 4** | Product & category APIs + Customer storefront setup | 🟢 Completed |
+| **Phase 5** | Product search, filters, pagination, details, cart & wishlist | 🟡 Next Up |
 | **Phase 6** | Admin dashboard, inventory management & sales analytics | ⚪ Pending |
 | **Phase 7** | Checkout, order processing, ACID transactions & Stripe payments | ⚪ Pending |
 | **Phase 8** | Gemini-powered AI shopping assistant grounded in database products | ⚪ Pending |
@@ -53,3 +53,18 @@
 - [x] Build rate-limiting middleware (`rateLimiter.js`)
 - [x] Write comprehensive automated test suite (`server/tests/auth.test.js`) — 22 tests passing
 - [x] Document authentication architecture in `docs/auth.md`
+
+### Phase 4: Product & Category REST APIs + Customer Storefront
+- [x] Build Category REST APIs (`GET /`, `GET /slug/:slug`, `GET /:id`, admin `POST`, `PATCH`, `DELETE`)
+- [x] Prevent category deletion when products are linked (HTTP 409)
+- [x] Build Product REST APIs (`GET /`, `GET /slug/:slug`, `GET /:id`, admin `POST`, `PATCH`, `DELETE`)
+- [x] Add pagination, search, category filter, and sorting with SQL injection whitelist
+- [x] Implement safe soft-deactivation (`is_active = false`) for product deletion
+- [x] Write automated test suite (`server/tests/catalog.test.js`) — 23 tests passing (45 total across project)
+- [x] Initialize React + Vite customer storefront in `client/`
+- [x] Configure Tailwind CSS with custom navy & slate theme
+- [x] Build responsive `Navbar`, `Footer`, `ProductCard`, and `ProductSkeleton` components
+- [x] Implement `HomePage`, `ProductsPage` (catalog), `ProductDetailPage`, and `NotFoundPage`
+- [x] Connect storefront to backend API using Axios client with `VITE_API_BASE_URL`
+- [x] Verify production Vite build (`npm run build` completed with zero errors)
+- [x] Document catalog APIs in `docs/catalog-api.md`
