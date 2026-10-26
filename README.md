@@ -7,7 +7,7 @@ A production-grade, AI-assisted full-stack e-commerce web application with intel
 - **Frontend**: React (Vite), Tailwind CSS, React Router, Lucide Icons
 - **Admin Dashboard**: React, Tailwind CSS, Charting
 - **Backend**: Node.js, Express.js (RESTful API architecture)
-- **Database**: PostgreSQL (Raw SQL queries with `pg` connection pool, versioned migrations)
+- **Database**: PostgreSQL 18+ (Raw SQL queries with `pg` connection pool, versioned migrations)
 - **Authentication**: JWT & bcrypt password hashing with Role-Based Access Control (RBAC)
 - **AI Integration**: Google Gemini API (Backend-grounded product discovery)
 
@@ -19,10 +19,11 @@ nexcart/
   admin/          # Merchant/Admin dashboard (React + Vite)
   server/         # Node.js + Express REST API backend
     src/
-      config/     # Database and environment configurations
-      controllers/# HTTP request handlers
+      config/     # Database pool and environment configurations
+      controllers/# HTTP request handlers (health, readiness)
       middleware/ # Auth, validation, error handling middleware
       routes/     # Express route definitions
+      scripts/    # Database init, migration, seed & verify scripts
       services/   # Core business logic and external services
       validators/ # Input validation schemas
       utils/      # Helper utilities
@@ -32,7 +33,7 @@ nexcart/
   database/
     migrations/   # SQL migration files
     seeds/        # Database seed scripts
-  docs/           # Architectural and API documentation
+  docs/           # Architectural, database & progress documentation
 ```
 
 ## 🛠️ Quick Start (Development)
@@ -48,10 +49,17 @@ nexcart/
 cd server
 npm install
 cp .env.example .env
+
+# Database Initialization, Migrations & Seeds
+npm run db:init      # Creates nexcart_db if not present
+npm run db:migrate   # Applies transactional SQL migrations
+npm run db:seed      # Populates catalog with realistic categories & products
+npm run db:verify    # Inspects schema, tables, and constraints
+
+# Start Development Server
 npm run dev
 ```
 
-Health Check:
-```bash
-curl http://localhost:5000/api/health
-```
+### Health & Readiness Endpoints
+- **Liveness probe**: `curl http://localhost:5000/api/health`
+- **Readiness probe**: `curl http://localhost:5000/api/health/ready`

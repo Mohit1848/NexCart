@@ -4,9 +4,9 @@
 
 | Phase | Description | Status |
 |---|---|---|
-| **Phase 1** | Environment setup, repository structure, PostgreSQL check, health-check endpoint | 🟢 Completed |
-| **Phase 2** | Database schema design, migrations, seed data & connection pool | 🟡 Next Up |
-| **Phase 3** | Authentication, user accounts, JWT, password hashing & RBAC | ⚪ Pending |
+| **Phase 1** | Environment setup, repository structure, health-check endpoint | 🟢 Completed |
+| **Phase 2** | Database schema design, migrations, seed data & connection pool | 🟢 Completed |
+| **Phase 3** | Authentication, user accounts, JWT, password hashing & RBAC | 🟡 Next Up |
 | **Phase 4** | Product & category APIs + Customer storefront setup | ⚪ Pending |
 | **Phase 5** | Product search, filters, pagination, details, cart & wishlist | ⚪ Pending |
 | **Phase 6** | Admin dashboard, inventory management & sales analytics | ⚪ Pending |
@@ -27,3 +27,15 @@
 - [x] Implement modular Express structure (`app.js` and `server.js`)
 - [x] Implement `GET /api/health` endpoint with uptime and timestamp
 - [x] Test and verify `GET /api/health` (Status 200) and `404 Handler` (Status 404)
+
+### Phase 2: PostgreSQL Database Schema & Migrations
+- [x] Verify PostgreSQL service connectivity (PostgreSQL 18.6)
+- [x] Safely configure `server/.env` credentials and ensure `nexcart_db` exists
+- [x] Create resilient connection pool in `server/src/config/db.js` (`pg.Pool`)
+- [x] Design normalized schema (`users`, `addresses`, `categories`, `products`, `carts`, `cart_items`, `wishlists`, `wishlist_items`, `orders`, `order_items`, `payments`, `reviews`)
+- [x] Implement exact monetary representation (`NUMERIC(10,2)` and `NUMERIC(12,2)`)
+- [x] Add data integrity constraints (Foreign Keys, NOT NULL, CHECK, UNIQUE, `set_updated_at` triggers)
+- [x] Implement transactional, idempotent migration runner (`server/src/scripts/migrate.js`)
+- [x] Create repeatable sample catalog seed script (`server/src/scripts/seed.js`)
+- [x] Implement distinct database readiness check (`GET /api/health/ready`)
+- [x] Document database architecture in `docs/database.md`

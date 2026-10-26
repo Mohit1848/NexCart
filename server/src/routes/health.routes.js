@@ -1,13 +1,20 @@
 import { Router } from 'express';
-import { getHealthStatus } from '../controllers/health.controller.js';
+import { getHealthStatus, getReadinessStatus } from '../controllers/health.controller.js';
 
 const router = Router();
 
 /**
  * @route   GET /api/health
- * @desc    Check server health and readiness
+ * @desc    Liveness check (process status)
  * @access  Public
  */
 router.get('/', getHealthStatus);
+
+/**
+ * @route   GET /api/health/ready
+ * @desc    Readiness check (database connectivity status)
+ * @access  Public
+ */
+router.get('/ready', getReadinessStatus);
 
 export default router;

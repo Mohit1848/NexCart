@@ -1,33 +1,37 @@
 {
-  "name": "nexcart-api",
-  "version": "1.0.0",
-  "description": "Backend REST API for NexCart e-commerce platform",
-  "type": "module",
-  "main": "src/server.js",
-  "scripts": {
-    "start": "node src/server.js",
-    "dev": "nodemon src/server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [
-    "ecommerce",
-    "express",
-    "postgresql",
-    "ai",
-    "gemini",
-    "rest-api"
-  ],
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.7",
-    "express": "^4.21.2",
-    "helmet": "^8.0.0",
-    "morgan": "^1.10.0",
-    "pg": "^8.13.1"
-  },
-  "devDependencies": {
-    "nodemon": "^3.1.9"
-  }
+    "name":  "nexcart-api",
+    "version":  "1.0.0",
+    "description":  "Backend REST API for NexCart e-commerce platform",
+    "type":  "module",
+    "main":  "src/server.js",
+    "scripts":  {
+                    "start":  "node src/server.js",
+                    "dev":  "nodemon src/server.js",
+                    "test":  "echo \"Error: no test specified\" \u0026\u0026 exit 1",
+                    "db:init":  "node src/scripts/initDb.js",
+                    "db:migrate":  "node src/scripts/migrate.js",
+                    "db:seed":  "node src/scripts/seed.js",
+                    "db:verify":  "node src/scripts/verifyDb.js"
+                },
+    "keywords":  [
+                     "ecommerce",
+                     "express",
+                     "postgresql",
+                     "ai",
+                     "gemini",
+                     "rest-api"
+                 ],
+    "author":  "",
+    "license":  "ISC",
+    "dependencies":  {
+                         "cors":  "^2.8.5",
+                         "dotenv":  "^16.4.7",
+                         "express":  "^4.21.2",
+                         "helmet":  "^8.0.0",
+                         "morgan":  "^1.10.0",
+                         "pg":  "^8.13.1"
+                     },
+    "devDependencies":  {
+                            "nodemon":  "^3.1.9"
+                        }
 }
