@@ -4,6 +4,8 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 
 import healthRoutes from './routes/health.routes.js';
+import authRoutes from './routes/auth.routes.js';
+import userRoutes from './routes/user.routes.js';
 import { notFoundHandler, errorHandler } from './middleware/errorHandler.js';
 
 const app = express();
@@ -40,6 +42,8 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // API Route Mounts
 app.use('/api/health', healthRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 
 // Root route welcoming message
 app.get('/', (req, res) => {
@@ -47,7 +51,8 @@ app.get('/', (req, res) => {
     name: 'NexCart API',
     version: '1.0.0',
     documentation: '/docs',
-    health: '/api/health'
+    health: '/api/health',
+    readiness: '/api/health/ready'
   });
 });
 

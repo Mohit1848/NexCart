@@ -6,8 +6,8 @@
 |---|---|---|
 | **Phase 1** | Environment setup, repository structure, health-check endpoint | 🟢 Completed |
 | **Phase 2** | Database schema design, migrations, seed data & connection pool | 🟢 Completed |
-| **Phase 3** | Authentication, user accounts, JWT, password hashing & RBAC | 🟡 Next Up |
-| **Phase 4** | Product & category APIs + Customer storefront setup | ⚪ Pending |
+| **Phase 3** | Authentication, user accounts, JWT, password hashing & RBAC | 🟢 Completed |
+| **Phase 4** | Product & category APIs + Customer storefront setup | 🟡 Next Up |
 | **Phase 5** | Product search, filters, pagination, details, cart & wishlist | ⚪ Pending |
 | **Phase 6** | Admin dashboard, inventory management & sales analytics | ⚪ Pending |
 | **Phase 7** | Checkout, order processing, ACID transactions & Stripe payments | ⚪ Pending |
@@ -39,3 +39,17 @@
 - [x] Create repeatable sample catalog seed script (`server/src/scripts/seed.js`)
 - [x] Implement distinct database readiness check (`GET /api/health/ready`)
 - [x] Document database architecture in `docs/database.md`
+
+### Phase 3: Authentication, User Accounts, JWT & RBAC
+- [x] Audit `users` table and implement migration `002_case_insensitive_email.sql`
+- [x] Implement secure password hashing with `bcryptjs` (12 salt rounds)
+- [x] Implement JWT configuration module (`server/src/config/jwt.js`)
+- [x] Build validation rules (`server/src/validators/auth.validators.js`)
+- [x] Implement `POST /api/auth/register` (hardcoded `role = 'customer'`, 409 conflict on duplicate)
+- [x] Implement `POST /api/auth/login` (generic 401 error, rate-limited)
+- [x] Implement `GET /api/auth/me` and `POST /api/auth/logout`
+- [x] Implement `GET /api/users/me`, `PATCH /api/users/me` (allowlist), and `PATCH /api/users/me/password`
+- [x] Build authentication middleware (`authenticate.js`) and RBAC middleware (`authorize.js`)
+- [x] Build rate-limiting middleware (`rateLimiter.js`)
+- [x] Write comprehensive automated test suite (`server/tests/auth.test.js`) — 22 tests passing
+- [x] Document authentication architecture in `docs/auth.md`

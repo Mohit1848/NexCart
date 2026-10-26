@@ -7,7 +7,7 @@
     "scripts":  {
                     "start":  "node src/server.js",
                     "dev":  "nodemon src/server.js",
-                    "test":  "echo \"Error: no test specified\" \u0026\u0026 exit 1",
+                    "test":  "vitest run",
                     "db:init":  "node src/scripts/initDb.js",
                     "db:migrate":  "node src/scripts/migrate.js",
                     "db:seed":  "node src/scripts/seed.js",
@@ -24,14 +24,19 @@
     "author":  "",
     "license":  "ISC",
     "dependencies":  {
+                         "bcryptjs":  "^3.0.3",
                          "cors":  "^2.8.5",
                          "dotenv":  "^16.4.7",
                          "express":  "^4.21.2",
+                         "express-rate-limit":  "^8.7.1",
                          "helmet":  "^8.0.0",
+                         "jsonwebtoken":  "^9.0.3",
                          "morgan":  "^1.10.0",
                          "pg":  "^8.13.1"
                      },
     "devDependencies":  {
-                            "nodemon":  "^3.1.9"
+                            "nodemon":  "^3.1.9",
+                            "supertest":  "^7.3.1",
+                            "vitest":  "^5.0.5"
                         }
 }
