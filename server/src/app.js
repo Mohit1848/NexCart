@@ -44,7 +44,7 @@ app.use('/api/health', healthRoutes);
 // Root route welcoming message
 app.get('/', (req, res) => {
   res.json({
-    name: 'ShopMate AI API',
+    name: 'NexCart API',
     version: '1.0.0',
     documentation: '/docs',
     health: '/api/health'

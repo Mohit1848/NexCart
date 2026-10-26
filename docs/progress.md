@@ -1,4 +1,4 @@
-# ShopMate AI — Project Roadmap & Progress Tracker
+# NexCart — Project Roadmap & Progress Tracker
 
 ## Phase Status Summary
 

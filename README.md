@@ -1,4 +1,4 @@
-# ShopMate AI — AI-Powered E-Commerce Platform
+# NexCart — AI-Powered E-Commerce Platform
 
 A production-grade, AI-assisted full-stack e-commerce web application with intelligent product recommendations grounded in a PostgreSQL database.
 
@@ -14,7 +14,7 @@ A production-grade, AI-assisted full-stack e-commerce web application with intel
 ## 📁 Monorepo Architecture
 
 ```text
-shopmate-ai/
+nexcart/
   client/         # Customer storefront (React + Vite)
   admin/          # Merchant/Admin dashboard (React + Vite)
   server/         # Node.js + Express REST API backend

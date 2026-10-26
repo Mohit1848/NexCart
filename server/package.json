@@ -1,7 +1,7 @@
 {
-  "name": "shopmate-server",
+  "name": "nexcart-api",
   "version": "1.0.0",
-  "description": "Backend REST API for ShopMate AI e-commerce platform",
+  "description": "Backend REST API for NexCart e-commerce platform",
   "type": "module",
   "main": "src/server.js",
   "scripts": {
