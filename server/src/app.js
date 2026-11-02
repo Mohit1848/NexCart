@@ -8,6 +8,9 @@ import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
 import categoryRoutes from './routes/category.routes.js';
 import productRoutes from './routes/product.routes.js';
+import cartRoutes from './routes/cart.routes.js';
+import wishlistRoutes from './routes/wishlist.routes.js';
+import adminRoutes from './routes/admin.routes.js';
 import { notFoundHandler, errorHandler } from './middleware/errorHandler.js';
 
 const app = express();
@@ -48,6 +51,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/cart', cartRoutes);
+app.use('/api/wishlist', wishlistRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Root route welcoming message
 app.get('/', (req, res) => {

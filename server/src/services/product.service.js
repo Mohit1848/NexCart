@@ -4,7 +4,8 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12
 const ALLOWED_SORT_MAP = {
   price: 'p.price',
   name: 'p.name',
-  created_at: 'p.created_at'
+  created_at: 'p.created_at',
+  stock_quantity: 'p.stock_quantity'
 };
 
 /**
@@ -17,6 +18,7 @@ export const getProducts = async ({
   search = null,
   sortBy = 'created_at',
   order = 'desc',
+  stockStatus = 'all',
   includeInactive = false
 } = {}) => {
   const whereClauses = [];
@@ -26,6 +28,15 @@ export const getProducts = async ({
   // Active status filter
   if (!includeInactive) {
     whereClauses.push('p.is_active = true');
+  }
+
+  // Stock status filter (for admin inventory view and public filters)
+  if (stockStatus === 'in_stock') {
+    whereClauses.push('p.stock_quantity > 0');
+  } else if (stockStatus === 'low_stock') {
+    whereClauses.push('(p.stock_quantity >= 1 AND p.stock_quantity <= 5)');
+  } else if (stockStatus === 'out_of_stock') {
+    whereClauses.push('p.stock_quantity = 0');
   }
 
   // Category filter (accepts either slug or UUID)
@@ -39,9 +50,9 @@ export const getProducts = async ({
     }
   }
 
-  // Search filter (searches product name and description)
+  // Search filter (searches product name, slug, and description)
   if (search) {
-    whereClauses.push(`(p.name ILIKE $${paramIdx} OR p.description ILIKE $${paramIdx})`);
+    whereClauses.push(`(p.name ILIKE $${paramIdx} OR p.slug ILIKE $${paramIdx} OR p.description ILIKE $${paramIdx})`);
     params.push(`%${search}%`);
     paramIdx++;
   }

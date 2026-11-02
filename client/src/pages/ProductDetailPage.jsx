@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, ShoppingBag, Shield, Truck, RotateCcw, CheckCircle2, AlertCircle, Sparkles } from 'lucide-react';
+import { ArrowLeft, ShoppingBag, Shield, Truck, RotateCcw, CheckCircle2, AlertCircle, Heart, Check } from 'lucide-react';
 import { fetchProductBySlug, formatCurrency } from '../api/client';
+import { useCart } from '../context/CartContext';
 
 export const ProductDetailPage = () => {
   const { slug } = useParams();
@@ -10,6 +11,9 @@ export const ProductDetailPage = () => {
   const [error, setError] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [imageError, setImageError] = useState(false);
+  const [addedSuccess, setAddedSuccess] = useState(false);
+
+  const { addItem, toggleWishlist, isInWishlist, loading: cartLoading } = useCart();
 
   useEffect(() => {
     const loadProduct = async () => {
@@ -158,19 +162,50 @@ export const ProductDetailPage = () => {
               </div>
             )}
 
-            {/* Placeholder Add to Cart Button */}
-            <div className="space-y-2">
-              <button
-                disabled
-                className="w-full py-4 rounded-xl bg-slate-100 text-slate-400 font-bold text-sm flex items-center justify-center space-x-2 border border-slate-200 cursor-not-allowed"
-              >
-                <ShoppingBag className="w-4 h-4" />
-                <span>Add to Cart</span>
-              </button>
-              <div className="p-3 bg-blue-50/70 border border-blue-100 rounded-xl text-xs text-blue-700 flex items-center space-x-2">
-                <Sparkles className="w-4 h-4 text-blue-500 flex-shrink-0" />
+            {/* Active Add to Cart & Wishlist Buttons */}
+            <div className="space-y-3">
+              <div className="flex space-x-3">
+                <button
+                  onClick={async () => {
+                    const res = await addItem(product.id, quantity);
+                    if (res.success) {
+                      setAddedSuccess(true);
+                      setTimeout(() => setAddedSuccess(false), 2000);
+                    }
+                  }}
+                  disabled={!inStock || cartLoading}
+                  className="flex-1 py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm flex items-center justify-center space-x-2 shadow-lg shadow-blue-600/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {addedSuccess ? (
+                    <>
+                      <Check className="w-4 h-4 text-emerald-300" />
+                      <span>Added to Cart!</span>
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingBag className="w-4 h-4" />
+                      <span>{inStock ? 'Add to Cart' : 'Out of Stock'}</span>
+                    </>
+                  )}
+                </button>
+
+                <button
+                  onClick={() => toggleWishlist(product.id)}
+                  title={isInWishlist(product.id) ? 'Remove from Wishlist' : 'Save to Wishlist'}
+                  className={`p-4 rounded-xl border transition-all ${
+                    isInWishlist(product.id)
+                      ? 'bg-pink-50 border-pink-200 text-pink-600'
+                      : 'bg-slate-50 border-slate-200 text-slate-500 hover:text-pink-600 hover:bg-pink-50/50'
+                  }`}
+                >
+                  <Heart className={`w-5 h-5 ${isInWishlist(product.id) ? 'fill-pink-600' : ''}`} />
+                </button>
+              </div>
+
+              <div className="p-3 bg-emerald-50/70 border border-emerald-100 rounded-xl text-xs text-emerald-800 flex items-center space-x-2">
+                <Shield className="w-4 h-4 text-emerald-600 flex-shrink-0" />
                 <span>
-                  <strong>Phase 4 Storefront Preview:</strong> Full shopping cart, persistent items, and checkout pipeline unlock in Phase 5!
+                  <strong>Real-Time Stock Synchronized:</strong> Live database pricing and inventory validation active.
                 </span>
               </div>
             </div>
