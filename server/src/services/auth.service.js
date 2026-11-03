@@ -18,16 +18,17 @@ export const registerUser = async ({ fullName, email, password }) => {
     const insertSql = `
       INSERT INTO users (full_name, email, password_hash, role)
       VALUES ($1, $2, $3, 'customer')
-      RETURNING id, full_name, email, role, created_at, updated_at;
+      RETURNING id, full_name, email, role, token_version, created_at, updated_at;
     `;
     const res = await query(insertSql, [fullName.trim(), normalizedEmail, passwordHash]);
     const user = res.rows[0];
 
-    // Generate JWT token
+    // Generate JWT token with initial tokenVersion
     const token = signToken({
       id: user.id,
       email: user.email,
-      role: user.role
+      role: user.role,
+      tokenVersion: user.token_version
     });
 
     return {
@@ -60,7 +61,7 @@ export const loginUser = async ({ email, password }) => {
   const normalizedEmail = email.trim().toLowerCase();
 
   const findSql = `
-    SELECT id, full_name, email, password_hash, role, created_at, updated_at
+    SELECT id, full_name, email, password_hash, role, token_version, created_at, updated_at
     FROM users
     WHERE LOWER(email) = $1
     LIMIT 1;
@@ -86,7 +87,8 @@ export const loginUser = async ({ email, password }) => {
   const token = signToken({
     id: user.id,
     email: user.email,
-    role: user.role
+    role: user.role,
+    tokenVersion: user.token_version
   });
 
   return {
@@ -188,7 +190,8 @@ export const changeUserPassword = async (id, { currentPassword, newPassword }) =
 
   const newHash = await bcrypt.hash(newPassword, BCRYPT_SALT_ROUNDS);
 
-  await query('UPDATE users SET password_hash = $1 WHERE id = $2', [newHash, id]);
+  // Security Hardening: Increment token_version to immediately revoke all previously issued sessions
+  await query('UPDATE users SET password_hash = $1, token_version = token_version + 1 WHERE id = $2', [newHash, id]);
 
   return {
     success: true,

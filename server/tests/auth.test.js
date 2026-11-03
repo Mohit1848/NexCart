@@ -1,7 +1,8 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import app from '../src/app.js';
+import * as db from '../src/config/db.js';
 import { query, pool } from '../src/config/db.js';
 import { signToken } from '../src/config/jwt.js';
 
@@ -281,6 +282,7 @@ describe('Phase 3: Authentication, User Accounts & RBAC Test Suite', () => {
 
       expect(loginRes.status).toBe(200);
       expect(loginRes.body.data.token).toBeDefined();
+      authToken = loginRes.body.data.token; // Update authToken to valid new session after password rotation
     });
   });
 
@@ -296,10 +298,18 @@ describe('Phase 3: Authentication, User Accounts & RBAC Test Suite', () => {
     });
 
     it('should return HTTP 200 OK when an admin accesses admin-only route', async () => {
-      // Create a valid signed admin token
+      // Ensure admin user exists in database for live verification
+      const adminUserId = '00000000-0000-0000-0000-000000000001';
+      await query(
+        `INSERT INTO users (id, full_name, email, password_hash, role)
+         VALUES ($1, 'Admin Tester', 'admin_rbac_test@example.com', 'hashed_pw', 'admin')
+         ON CONFLICT (id) DO UPDATE SET role = 'admin';`,
+        [adminUserId]
+      );
+
       const adminToken = signToken({
-        id: '00000000-0000-0000-0000-000000000001',
-        email: 'admin@nexcart.local',
+        id: adminUserId,
+        email: 'admin_rbac_test@example.com',
         role: 'admin'
       });
 
@@ -310,6 +320,142 @@ describe('Phase 3: Authentication, User Accounts & RBAC Test Suite', () => {
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
       expect(res.body.message).toContain('verified admin privileges');
+    });
+  });
+
+  describe('6. Security Hardening & Session Revocation (Pre-Phase 7)', () => {
+    it('should reject admin token immediately after user is demoted to customer (HTTP 403)', async () => {
+      // 1. Create dedicated admin user
+      const demoteEmail = `demote_${Date.now()}@example.com`;
+      const createRes = await query(
+        `INSERT INTO users (full_name, email, password_hash, role)
+         VALUES ('Demote Admin', $1, 'hashed_pw', 'admin')
+         RETURNING id, email, role;`,
+        [demoteEmail]
+      );
+      const demoteUserId = createRes.rows[0].id;
+      const initialAdminToken = signToken({
+        id: demoteUserId,
+        email: demoteEmail,
+        role: 'admin'
+      });
+
+      // Verify token initially succeeds on admin route
+      const initialRes = await request(app)
+        .get('/api/users/admin-check')
+        .set('Authorization', `Bearer ${initialAdminToken}`);
+      expect(initialRes.status).toBe(200);
+
+      // 2. Demote user in database from admin to customer
+      await query('UPDATE users SET role = $1 WHERE id = $2', ['customer', demoteUserId]);
+
+      // 3. Immediately retry using the SAME unexpired token
+      const demotedRes = await request(app)
+        .get('/api/users/admin-check')
+        .set('Authorization', `Bearer ${initialAdminToken}`);
+
+      expect(demotedRes.status).toBe(403);
+      expect(demotedRes.body.success).toBe(false);
+      expect(demotedRes.body.error.message).toContain('Access denied');
+    });
+
+    it('should reject token immediately after user is deleted from database (HTTP 401)', async () => {
+      // 1. Create a user
+      const deleteEmail = `delete_me_${Date.now()}@example.com`;
+      const createRes = await query(
+        `INSERT INTO users (full_name, email, password_hash, role)
+         VALUES ('Temp User', $1, 'hashed_pw', 'customer')
+         RETURNING id, email, role;`,
+        [deleteEmail]
+      );
+      const tempUserId = createRes.rows[0].id;
+      const tempToken = signToken({
+        id: tempUserId,
+        email: deleteEmail,
+        role: 'customer'
+      });
+
+      // Verify token initially succeeds
+      const initialRes = await request(app)
+        .get('/api/users/me')
+        .set('Authorization', `Bearer ${tempToken}`);
+      expect(initialRes.status).toBe(200);
+
+      // 2. Delete the user from PostgreSQL
+      await query('DELETE FROM users WHERE id = $1', [tempUserId]);
+
+      // 3. Retry with existing token
+      const deletedRes = await request(app)
+        .get('/api/users/me')
+        .set('Authorization', `Bearer ${tempToken}`);
+
+      expect(deletedRes.status).toBe(401);
+      expect(deletedRes.body.success).toBe(false);
+      expect(deletedRes.body.error.message).toContain('no longer exists');
+    });
+
+    it('should invalidate old token after password change and accept new login token', async () => {
+      // 1. Register a fresh user
+      const passEmail = `pw_rotate_${Date.now()}@example.com`;
+      const regRes = await request(app)
+        .post('/api/auth/register')
+        .send({
+          fullName: 'Password Rotation User',
+          email: passEmail,
+          password: 'InitialPassword123'
+        });
+      expect(regRes.status).toBe(201);
+      const oldToken = regRes.body.data.token;
+
+      // 2. Change password
+      const changeRes = await request(app)
+        .patch('/api/users/me/password')
+        .set('Authorization', `Bearer ${oldToken}`)
+        .send({
+          currentPassword: 'InitialPassword123',
+          newPassword: 'UpdatedPassword456'
+        });
+      expect(changeRes.status).toBe(200);
+
+      // 3. Verify old token is now REJECTED
+      const oldTokenRes = await request(app)
+        .get('/api/users/me')
+        .set('Authorization', `Bearer ${oldToken}`);
+
+      expect(oldTokenRes.status).toBe(401);
+      expect(oldTokenRes.body.success).toBe(false);
+      expect(oldTokenRes.body.error.message).toContain('invalidated or revoked');
+
+      // 4. Log in with new password and verify new token is ACCEPTED
+      const loginRes = await request(app)
+        .post('/api/auth/login')
+        .send({
+          email: passEmail,
+          password: 'UpdatedPassword456'
+        });
+      expect(loginRes.status).toBe(200);
+      const newToken = loginRes.body.data.token;
+
+      const newTokenRes = await request(app)
+        .get('/api/users/me')
+        .set('Authorization', `Bearer ${newToken}`);
+
+      expect(newTokenRes.status).toBe(200);
+      expect(newTokenRes.body.success).toBe(true);
+    });
+
+    it('should fail closed with HTTP 500 when database error occurs during authentication', async () => {
+      const querySpy = vi.spyOn(db, 'query').mockRejectedValueOnce(new Error('Simulated database failure'));
+
+      const res = await request(app)
+        .get('/api/users/me')
+        .set('Authorization', `Bearer ${authToken}`);
+
+      expect(res.status).toBe(500);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.message).toContain('database error');
+
+      querySpy.mockRestore();
     });
   });
 });

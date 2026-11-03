@@ -153,34 +153,36 @@ export const LoginPage = () => {
             </button>
           </form>
 
-          {/* Quick Pre-fill Credentials for Testing/Evaluation */}
-          <div className="mt-6 pt-6 border-t border-slate-200">
-            <p className="text-xs font-semibold text-slate-600 mb-2 flex items-center space-x-1.5">
-              <ShieldCheck className="w-4 h-4 text-blue-600" />
-              <span>Evaluation & Demo Credentials</span>
-            </p>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <button
-                type="button"
-                onClick={() => handlePreFill('admin@nexcart.local', 'AdminPassword123')}
-                className="p-2 rounded-lg border border-slate-200 bg-slate-50 hover:bg-blue-50 hover:border-blue-300 text-left transition-colors"
-              >
-                <div className="font-semibold text-slate-900">Admin Account</div>
-                <div className="text-[11px] text-slate-500 truncate">admin@nexcart.local</div>
-                <div className="text-[10px] text-blue-600 font-semibold mt-1">Fill Admin →</div>
-              </button>
+          {/* Quick Pre-fill Credentials for Testing/Evaluation (Strictly restricted to local development mode) */}
+          {(import.meta.env.DEV || import.meta.env.VITE_ENABLE_DEMO_AUTH === 'true') && (
+            <div className="mt-6 pt-6 border-t border-slate-200">
+              <p className="text-xs font-semibold text-slate-600 mb-2 flex items-center space-x-1.5">
+                <ShieldCheck className="w-4 h-4 text-blue-600" />
+                <span>Evaluation & Demo Credentials (Dev Only)</span>
+              </p>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <button
+                  type="button"
+                  onClick={() => handlePreFill('admin@nexcart.local', 'AdminPassword123')}
+                  className="p-2 rounded-lg border border-slate-200 bg-slate-50 hover:bg-blue-50 hover:border-blue-300 text-left transition-colors"
+                >
+                  <div className="font-semibold text-slate-900">Admin Account</div>
+                  <div className="text-[11px] text-slate-500 truncate">admin@nexcart.local</div>
+                  <div className="text-[10px] text-blue-600 font-semibold mt-1">Fill Admin →</div>
+                </button>
 
-              <button
-                type="button"
-                onClick={() => handlePreFill('shopper@nexcart.local', 'Password123')}
-                className="p-2 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-left transition-colors"
-              >
-                <div className="font-semibold text-slate-900">Customer Account</div>
-                <div className="text-[11px] text-slate-500 truncate">shopper@nexcart.local</div>
-                <div className="text-[10px] text-slate-600 font-semibold mt-1">Fill Customer →</div>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => handlePreFill('shopper@nexcart.local', 'Password123')}
+                  className="p-2 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-left transition-colors"
+                >
+                  <div className="font-semibold text-slate-900">Customer Account</div>
+                  <div className="text-[11px] text-slate-500 truncate">shopper@nexcart.local</div>
+                  <div className="text-[10px] text-slate-600 font-semibold mt-1">Fill Customer →</div>
+                </button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

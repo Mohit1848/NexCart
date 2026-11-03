@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { ShoppingBag, Search, Menu, X, Heart, User, ShieldCheck, LogIn, LogOut, Boxes } from 'lucide-react';
+import { ShoppingBag, Search, Menu, X, Heart, User, ShieldCheck, LogIn, LogOut, Boxes, Package } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 
@@ -53,6 +53,13 @@ export const Navbar = () => {
             <NavLink to="/products" className={navLinkClass}>
               Store Catalog
             </NavLink>
+
+            {/* Customer My Orders link rendered for authenticated users */}
+            {user && (
+              <NavLink to="/orders" className={navLinkClass}>
+                My Orders
+              </NavLink>
+            )}
 
             {/* Admin Portal link rendered ONLY when authenticated user has server-verified role 'admin' */}
             {isAdmin && (
@@ -187,6 +194,17 @@ export const Navbar = () => {
             >
               Store Catalog
             </Link>
+
+            {user && (
+              <Link
+                to="/orders"
+                onClick={() => setMobileMenuOpen(false)}
+                className="px-3 py-2 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50 flex items-center space-x-2"
+              >
+                <Package className="w-4 h-4 text-slate-500" />
+                <span>My Orders</span>
+              </Link>
+            )}
 
             {isAdmin && (
               <>

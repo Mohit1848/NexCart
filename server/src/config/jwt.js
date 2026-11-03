@@ -29,7 +29,8 @@ export const signToken = (payload) => {
     {
       id: payload.id,
       email: payload.email,
-      role: payload.role
+      role: payload.role,
+      tokenVersion: payload.tokenVersion ?? (payload.token_version ?? 1)
     },
     JWT_SECRET,
     {

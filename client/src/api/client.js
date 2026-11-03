@@ -162,6 +162,28 @@ export const fetchCurrentUserApi = async () => {
 };
 
 /**
+ * Customer Orders API calls
+ */
+export const fetchOrdersApi = async (params = {}) => {
+  const response = await apiClient.get('/orders', { params });
+  return response.data.data;
+};
+
+export const fetchOrderByIdApi = async (orderId) => {
+  const response = await apiClient.get(`/orders/${orderId}`);
+  return response.data.data.order;
+};
+
+export const checkoutApi = async (idempotencyKey = null) => {
+  const headers = {};
+  if (idempotencyKey) {
+    headers['Idempotency-Key'] = idempotencyKey;
+  }
+  const response = await apiClient.post('/orders/checkout', {}, { headers });
+  return response.data.data.order;
+};
+
+/**
  * Admin API calls (Guarded by RBAC on backend)
  */
 export const fetchAdminMetrics = async () => {

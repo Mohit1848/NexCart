@@ -1,10 +1,19 @@
 import { verifyToken } from '../config/jwt.js';
+import { query } from '../config/db.js';
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
  * Authentication Middleware
- * Validates the Authorization: Bearer <token> header and attaches the authenticated user identity to req.user.
+ * 
+ * Security Hardening (Pre-Phase 7):
+ * 1. Cryptographically verifies Bearer JWT signature, issuer, audience, and expiration.
+ * 2. Queries PostgreSQL primary key (users.id) to guarantee user exists (rejects deleted users).
+ * 3. Verifies tokenVersion matches live users.token_version (invalidates sessions after password change).
+ * 4. Binds the live database role (users.role) to req.user (instant enforcement of admin demotion/elevation).
+ * 5. Database errors fail closed with HTTP 500.
  */
-export const authenticate = (req, res, next) => {
+export const authenticate = async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader) {
@@ -29,16 +38,10 @@ export const authenticate = (req, res, next) => {
   }
 
   const token = parts[1];
+  let decoded;
 
   try {
-    const decoded = verifyToken(token);
-    // Attach verified token claims to request
-    req.user = {
-      id: decoded.id,
-      email: decoded.email,
-      role: decoded.role
-    };
-    next();
+    decoded = verifyToken(token);
   } catch (err) {
     let message = 'Invalid or expired authentication token.';
     if (err.name === 'TokenExpiredError') {
@@ -52,6 +55,68 @@ export const authenticate = (req, res, next) => {
       error: {
         message,
         statusCode: 401
+      }
+    });
+  }
+
+  // Validate UUID format to prevent invalid input syntax database errors
+  if (!decoded.id || !UUID_REGEX.test(decoded.id)) {
+    return res.status(401).json({
+      success: false,
+      error: {
+        message: 'Invalid user identity format in token claims.',
+        statusCode: 401
+      }
+    });
+  }
+
+  // Live PostgreSQL verification: Existence, Role, and Session Revocation
+  try {
+    const userRes = await query(
+      'SELECT id, email, role, token_version FROM users WHERE id = $1 LIMIT 1;',
+      [decoded.id]
+    );
+
+    // Requirement B: Reject deleted or non-existent users
+    if (userRes.rows.length === 0) {
+      return res.status(401).json({
+        success: false,
+        error: {
+          message: 'User account no longer exists or has been deleted.',
+          statusCode: 401
+        }
+      });
+    }
+
+    const liveUser = userRes.rows[0];
+
+    // Requirement C: Revoke sessions issued prior to password change
+    const tokenVersion = decoded.tokenVersion ?? 1;
+    if (tokenVersion !== liveUser.token_version) {
+      return res.status(401).json({
+        success: false,
+        error: {
+          message: 'Session has been invalidated or revoked. Please log in again.',
+          statusCode: 401
+        }
+      });
+    }
+
+    // Requirement A: Bind verified live database role (instant demotion/elevation enforcement)
+    req.user = {
+      id: liveUser.id,
+      email: liveUser.email,
+      role: liveUser.role
+    };
+
+    next();
+  } catch (dbErr) {
+    // Fail closed: Database errors must NEVER grant access
+    return res.status(500).json({
+      success: false,
+      error: {
+        message: 'Authentication verification failed due to internal database error.',
+        statusCode: 500
       }
     });
   }

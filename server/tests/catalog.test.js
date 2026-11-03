@@ -13,6 +13,16 @@ describe('Phase 4: Product & Category REST APIs Test Suite', () => {
   let seededCategoryId = '';
 
   beforeAll(async () => {
+    // Seed real users in PostgreSQL for live authentication verification
+    await query(
+      `INSERT INTO users (id, full_name, email, password_hash, role)
+       VALUES 
+         ('11111111-1111-1111-1111-111111111111', 'Test Customer', $1, 'hashed_pw', 'customer'),
+         ('22222222-2222-2222-2222-222222222222', 'Test Admin', $2, 'hashed_pw', 'admin')
+       ON CONFLICT (id) DO UPDATE SET role = EXCLUDED.role;`,
+      [`customer_${timestamp}@example.com`, `admin_${timestamp}@example.com`]
+    );
+
     // Generate valid tokens for RBAC testing
     customerToken = signToken({
       id: '11111111-1111-1111-1111-111111111111',
@@ -32,7 +42,8 @@ describe('Phase 4: Product & Category REST APIs Test Suite', () => {
   });
 
   afterAll(async () => {
-    // Clean up test items created during the test run
+    // Clean up test items and test users created during the test run
+    await query("DELETE FROM users WHERE id IN ('11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222');");
     await query("DELETE FROM products WHERE slug LIKE 'test-%'");
     await query("DELETE FROM categories WHERE slug LIKE 'test-%'");
     await pool.end();
