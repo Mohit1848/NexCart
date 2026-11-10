@@ -1,4 +1,4 @@
-import { query } from '../config/db.js';
+import { query, pool } from '../config/db.js';
 import { getProducts } from './product.service.js';
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -137,9 +137,225 @@ export const toggleProductStatus = async (productId) => {
   return res.rows[0];
 };
 
+export const ALLOWED_STATUS_TRANSITIONS = Object.freeze({
+  pending: ['processing'],
+  processing: ['shipped'],
+  shipped: ['delivered'],
+  delivered: [],
+  cancelled: []
+});
+
+const ALLOWED_ORDER_SORT_MAP = {
+  created_at: 'o.created_at',
+  total_amount: 'o.total_amount',
+  order_number: 'o.order_number',
+  status: 'o.status'
+};
+
+/**
+ * Retrieves paginated, filtered, and searchable orders across all customers for admins.
+ * Uses a single aggregation query with GROUP BY to avoid N+1 queries for item counts.
+ */
+export const getAdminOrders = async ({
+  page = 1,
+  limit = 10,
+  status = 'all',
+  search = null,
+  sortBy = 'created_at',
+  order = 'desc'
+} = {}) => {
+  const whereClauses = [];
+  const params = [];
+  let paramIdx = 1;
+
+  if (status && status !== 'all') {
+    whereClauses.push(`o.status = $${paramIdx++}`);
+    params.push(status);
+  }
+
+  if (search) {
+    whereClauses.push(
+      `(o.order_number ILIKE $${paramIdx} OR u.email ILIKE $${paramIdx} OR u.full_name ILIKE $${paramIdx})`
+    );
+    params.push(`%${search}%`);
+    paramIdx++;
+  }
+
+  const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
+
+  // 1. Total matching orders count
+  const countSql = `
+    SELECT COUNT(*)::int AS total
+    FROM orders o
+    INNER JOIN users u ON u.id = o.user_id
+    ${whereSql};
+  `;
+  const countRes = await query(countSql, params);
+  const totalItems = countRes.rows[0].total;
+
+  // 2. Paginated data query with single-pass item count aggregation
+  const sortColumn = ALLOWED_ORDER_SORT_MAP[sortBy] || 'o.created_at';
+  const sortDirection = order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+  const offset = (page - 1) * limit;
+
+  const dataParams = [...params, limit, offset];
+  const dataSql = `
+    SELECT 
+      o.id,
+      o.order_number AS "orderNumber",
+      o.status,
+      o.currency,
+      o.subtotal::float AS subtotal,
+      o.total_amount::float AS "totalAmount",
+      o.total_amount::float AS total,
+      o.created_at AS "createdAt",
+      o.updated_at AS "updatedAt",
+      COALESCE(SUM(oi.quantity), 0)::int AS "itemCount",
+      json_build_object(
+        'id', u.id,
+        'fullName', u.full_name,
+        'email', u.email
+      ) AS user
+    FROM orders o
+    INNER JOIN users u ON u.id = o.user_id
+    LEFT JOIN order_items oi ON oi.order_id = o.id
+    ${whereSql}
+    GROUP BY o.id, u.id
+    ORDER BY ${sortColumn} ${sortDirection}, o.id ASC
+    LIMIT $${paramIdx++} OFFSET $${paramIdx};
+  `;
+
+  const dataRes = await query(dataSql, dataParams);
+  const totalPages = Math.ceil(totalItems / limit) || 1;
+
+  return {
+    orders: dataRes.rows,
+    pagination: {
+      totalItems,
+      totalPages,
+      currentPage: page,
+      limit,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1
+    }
+  };
+};
+
+/**
+ * Retrieves full order details by ID for admins, including customer summary and immutable item snapshots.
+ */
+export const getAdminOrderById = async (orderId) => {
+  const sql = `
+    SELECT 
+      o.id,
+      o.order_number AS "orderNumber",
+      o.status,
+      o.currency,
+      o.subtotal::float AS subtotal,
+      o.total_amount::float AS "totalAmount",
+      o.total_amount::float AS total,
+      o.idempotency_key AS "idempotencyKey",
+      o.created_at AS "createdAt",
+      o.updated_at AS "updatedAt",
+      json_build_object(
+        'id', u.id,
+        'fullName', u.full_name,
+        'email', u.email,
+        'role', u.role
+      ) AS user,
+      COALESCE(
+        (
+          SELECT json_agg(
+            json_build_object(
+              'id', oi.id,
+              'productId', oi.product_id,
+              'productName', oi.product_name,
+              'unitPrice', oi.unit_price::float,
+              'quantity', oi.quantity,
+              'lineTotal', oi.line_total::float,
+              'createdAt', oi.created_at
+            ) ORDER BY oi.created_at ASC
+          )
+          FROM order_items oi
+          WHERE oi.order_id = o.id
+        ),
+        '[]'::json
+      ) AS items
+    FROM orders o
+    INNER JOIN users u ON u.id = o.user_id
+    WHERE o.id = $1;
+  `;
+  const res = await query(sql, [orderId]);
+  return res.rows[0] || null;
+};
+
+/**
+ * Updates order fulfilment status enforcing strict sequential lifecycle rules and concurrency locking.
+ * 
+ * Permitted transitions:
+ * - pending -> processing
+ * - processing -> shipped
+ * - shipped -> delivered
+ */
+export const updateAdminOrderStatus = async (orderId, nextStatus) => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // Row lock on the order row to serialize concurrent status update attempts
+    const orderRes = await client.query(
+      'SELECT id, order_number AS "orderNumber", status FROM orders WHERE id = $1 FOR UPDATE;',
+      [orderId]
+    );
+
+    if (orderRes.rows.length === 0) {
+      const err = new Error('Order not found');
+      err.statusCode = 404;
+      throw err;
+    }
+
+    const currentOrder = orderRes.rows[0];
+    const allowedNext = ALLOWED_STATUS_TRANSITIONS[currentOrder.status] || [];
+
+    if (!allowedNext.includes(nextStatus)) {
+      const err = new Error(
+        `Cannot transition order from "${currentOrder.status}" to "${nextStatus}". ` +
+        (allowedNext.length > 0
+          ? `Allowed next transition is: ${allowedNext.join(', ')}.`
+          : `Order is in a terminal status ("${currentOrder.status}") and cannot be transitioned further.`)
+      );
+      err.statusCode = 400;
+      throw err;
+    }
+
+    const updateRes = await client.query(
+      `UPDATE orders 
+       SET status = $1, updated_at = NOW() 
+       WHERE id = $2 
+       RETURNING id, order_number AS "orderNumber", status, updated_at AS "updatedAt";`,
+      [nextStatus, orderId]
+    );
+
+    await client.query('COMMIT');
+    return updateRes.rows[0];
+  } catch (err) {
+    try {
+      await client.query('ROLLBACK');
+    } catch (rollbackErr) {
+      // ignore
+    }
+    throw err;
+  } finally {
+    client.release();
+  }
+};
+
 export default {
   getAdminMetrics,
   getAdminProducts,
   updateProductStock,
-  toggleProductStatus
+  toggleProductStatus,
+  getAdminOrders,
+  getAdminOrderById,
+  updateAdminOrderStatus
 };

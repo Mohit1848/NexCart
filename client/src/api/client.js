@@ -208,4 +208,19 @@ export const toggleProductStatusApi = async (productId) => {
   return response.data.data.product;
 };
 
+export const fetchAdminOrders = async (params = {}) => {
+  const response = await apiClient.get('/admin/orders', { params });
+  return response.data.data;
+};
+
+export const fetchAdminOrderById = async (orderId) => {
+  const response = await apiClient.get(`/admin/orders/${orderId}`);
+  return response.data.data.order;
+};
+
+export const updateAdminOrderStatusApi = async (orderId, status) => {
+  const response = await apiClient.patch(`/admin/orders/${orderId}/status`, { status });
+  return response.data.data.order;
+};
+
 export default apiClient;

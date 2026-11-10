@@ -109,3 +109,101 @@ export const validateUUIDParam = (id) => {
     isValid: true
   };
 };
+
+export const validateOrderUUIDParam = (id) => {
+  if (!id || typeof id !== 'string' || !UUID_REGEX.test(id)) {
+    return {
+      isValid: false,
+      error: 'Invalid order ID format'
+    };
+  }
+  return {
+    isValid: true
+  };
+};
+
+const ALLOWED_ORDER_STATUSES = ['all', 'pending', 'processing', 'shipped', 'delivered', 'cancelled'];
+const ALLOWED_ORDER_SORT_COLUMNS = ['created_at', 'total_amount', 'order_number', 'status'];
+
+export const validateAdminOrderQuery = (query) => {
+  const errors = [];
+
+  let page = parseInt(query.page || '1', 10);
+  if (isNaN(page) || page < 1) {
+    errors.push('Page must be a positive integer');
+    page = 1;
+  }
+
+  let limit = parseInt(query.limit || '10', 10);
+  if (isNaN(limit) || limit < 1 || limit > 100) {
+    errors.push('Limit must be an integer between 1 and 100');
+    limit = 10;
+  }
+
+  let status = (query.status || 'all').toLowerCase();
+  if (!ALLOWED_ORDER_STATUSES.includes(status)) {
+    errors.push(`status must be one of: ${ALLOWED_ORDER_STATUSES.join(', ')}`);
+    status = 'all';
+  }
+
+  let sortBy = (query.sortBy || 'created_at').toLowerCase();
+  if (!ALLOWED_ORDER_SORT_COLUMNS.includes(sortBy)) {
+    errors.push(`sortBy must be one of: ${ALLOWED_ORDER_SORT_COLUMNS.join(', ')}`);
+    sortBy = 'created_at';
+  }
+
+  let order = (query.order || 'desc').toLowerCase();
+  if (!ALLOWED_SORT_ORDERS.includes(order)) {
+    errors.push(`order must be one of: ${ALLOWED_SORT_ORDERS.join(', ')}`);
+    order = 'desc';
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+    data: {
+      page,
+      limit,
+      status,
+      search: query.search ? query.search.trim() : (query.q ? query.q.trim() : null),
+      sortBy,
+      order
+    }
+  };
+};
+
+export const validateUpdateOrderStatus = (body) => {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    return {
+      isValid: false,
+      errors: ['Request body must be a JSON object'],
+      data: null
+    };
+  }
+
+  const errors = [];
+  if (!body.status || typeof body.status !== 'string') {
+    errors.push('status is required and must be a string');
+  } else {
+    const validTargetStatuses = ['processing', 'shipped', 'delivered'];
+    const cleanStatus = body.status.toLowerCase().trim();
+    if (!validTargetStatuses.includes(cleanStatus)) {
+      errors.push(`status must be one of: ${validTargetStatuses.join(', ')}`);
+    }
+  }
+
+  // Ensure no unintended fields are modified
+  const allowedKeys = ['status'];
+  const extraKeys = Object.keys(body).filter((k) => !allowedKeys.includes(k));
+  if (extraKeys.length > 0) {
+    errors.push(`Unpermitted fields: ${extraKeys.join(', ')}`);
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+    data: {
+      status: body.status ? body.status.toLowerCase().trim() : null
+    }
+  };
+};

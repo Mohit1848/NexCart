@@ -227,6 +227,14 @@ export const Navbar = () => {
                   <Boxes className="w-4 h-4" />
                   <span>Inventory Manager</span>
                 </Link>
+                <Link
+                  to="/admin/orders"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="px-3 py-2 rounded-md text-sm font-semibold text-slate-700 hover:bg-slate-50 flex items-center space-x-2"
+                >
+                  <Package className="w-4 h-4" />
+                  <span>Orders Manager</span>
+                </Link>
               </>
             )}
 

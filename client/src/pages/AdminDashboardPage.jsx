@@ -12,7 +12,8 @@ import {
   ArrowRight,
   Boxes,
   ShieldCheck,
-  AlertCircle
+  AlertCircle,
+  ShoppingBag
 } from 'lucide-react';
 import { fetchAdminMetrics, formatCurrency } from '../api/client';
 
@@ -114,6 +115,14 @@ export const AdminDashboardPage = () => {
             <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
             <span>{refreshing ? 'Refreshing...' : 'Refresh'}</span>
           </button>
+
+          <Link
+            to="/admin/orders"
+            className="inline-flex items-center space-x-2 px-3.5 py-2 rounded-xl bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 transition-colors shadow-sm"
+          >
+            <ShoppingBag className="w-3.5 h-3.5 text-blue-400" />
+            <span>Orders Manager</span>
+          </Link>
 
           <Link
             to="/admin/inventory"

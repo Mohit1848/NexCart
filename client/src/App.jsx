@@ -15,6 +15,7 @@ import OrdersPage from './pages/OrdersPage';
 import OrderDetailPage from './pages/OrderDetailPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import AdminInventoryPage from './pages/AdminInventoryPage';
+import AdminOrdersPage from './pages/AdminOrdersPage';
 import NotFoundPage from './pages/NotFoundPage';
 
 import { CartProvider } from './context/CartContext';
@@ -69,6 +70,14 @@ export const App = () => {
                   element={
                     <AdminRoute>
                       <AdminInventoryPage />
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="/admin/orders"
+                  element={
+                    <AdminRoute>
+                      <AdminOrdersPage />
                     </AdminRoute>
                   }
                 />
