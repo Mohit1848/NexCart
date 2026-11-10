@@ -18,6 +18,25 @@ export const authRateLimiter = rateLimit({
   }
 });
 
+/**
+ * Rate Limiter for AI Shopping Assistant Endpoints
+ * Protects against prompt injection flooding, DoS, and LLM API cost depletion
+ */
+export const aiRateLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: process.env.NODE_ENV === 'test' ? 1000 : 30, // 30 requests per minute in production
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: {
+      message: 'Too many AI Assistant requests. Please wait a moment before sending another query.',
+      statusCode: 429
+    }
+  }
+});
+
 export default {
-  authRateLimiter
+  authRateLimiter,
+  aiRateLimiter
 };

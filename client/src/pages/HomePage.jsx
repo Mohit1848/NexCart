@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Sparkles, ArrowRight, Layers, Flame, CheckCircle, Cpu } from 'lucide-react';
+import { useCart } from '../context/CartContext';
 import { fetchCategories, fetchProducts } from '../api/client';
 import ProductCard from '../components/ProductCard';
 import ProductSkeleton from '../components/ProductSkeleton';
 
 export const HomePage = () => {
+  const { setIsAiOpen } = useCart();
   const [categories, setCategories] = useState([]);
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -56,6 +58,14 @@ export const HomePage = () => {
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
+            <button
+              onClick={() => setIsAiOpen(true)}
+              className="inline-flex items-center space-x-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-sm shadow-lg shadow-indigo-600/30 transition-all duration-200 transform hover:-translate-y-0.5 active:scale-95"
+            >
+              <Sparkles className="w-4 h-4 text-yellow-300" />
+              <span>Ask AI Assistant</span>
+            </button>
+
             <Link
               to="/products"
               className="inline-flex items-center space-x-2 px-6 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm shadow-lg shadow-blue-600/30 transition-all duration-200 transform hover:-translate-y-0.5"

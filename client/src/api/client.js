@@ -223,4 +223,17 @@ export const updateAdminOrderStatusApi = async (orderId, status) => {
   return response.data.data.order;
 };
 
+/**
+ * AI Shopping Assistant API calls (Phase 8: OpenAI-Powered & Catalog Grounded)
+ */
+export const sendAiChatApi = async ({ message, history = [] }) => {
+  const response = await apiClient.post('/ai/chat', { message, history });
+  return response.data.data;
+};
+
+export const fetchAiStatusApi = async () => {
+  const response = await apiClient.get('/ai/status');
+  return response.data.data;
+};
+
 export default apiClient;

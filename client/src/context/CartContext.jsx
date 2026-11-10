@@ -27,6 +27,7 @@ export const CartProvider = ({ children }) => {
 
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
+  const [isAiOpen, setIsAiOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [actionError, setActionError] = useState(null);
 
@@ -162,6 +163,8 @@ export const CartProvider = ({ children }) => {
         setIsCartOpen,
         isWishlistOpen,
         setIsWishlistOpen,
+        isAiOpen,
+        setIsAiOpen,
         loading,
         actionError,
         setActionError,

@@ -4,6 +4,7 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import CartDrawer from './components/CartDrawer';
 import WishlistDrawer from './components/WishlistDrawer';
+import AiAssistantDrawer from './components/AiAssistantDrawer';
 import AdminRoute from './components/AdminRoute';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -30,6 +31,7 @@ export const App = () => {
             <Navbar />
             <CartDrawer />
             <WishlistDrawer />
+            <AiAssistantDrawer />
             <main className="flex-1">
               <Routes>
                 {/* Public Storefront Routes */}

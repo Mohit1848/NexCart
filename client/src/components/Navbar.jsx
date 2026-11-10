@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { ShoppingBag, Search, Menu, X, Heart, User, ShieldCheck, LogIn, LogOut, Boxes, Package } from 'lucide-react';
+import { ShoppingBag, Search, Menu, X, Heart, User, ShieldCheck, LogIn, LogOut, Boxes, Package, Sparkles } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 
@@ -8,7 +8,7 @@ export const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
-  const { cart, wishlist, setIsCartOpen, setIsWishlistOpen } = useCart();
+  const { cart, wishlist, setIsCartOpen, setIsWishlistOpen, setIsAiOpen } = useCart();
   const { user, isAdmin, logout } = useAuth();
 
   const handleSearchSubmit = (e) => {
@@ -93,6 +93,16 @@ export const Navbar = () => {
 
           {/* Right Action Icons */}
           <div className="flex items-center space-x-2 sm:space-x-3">
+            {/* AI Assistant Button */}
+            <button
+              onClick={() => setIsAiOpen(true)}
+              title="NexCart AI Shopping Assistant"
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 text-indigo-700 border border-indigo-200/80 text-xs font-semibold shadow-2xs transition-all active:scale-95"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-indigo-600 animate-pulse" />
+              <span>Ask AI</span>
+            </button>
+
             {/* Wishlist */}
             <div className="relative">
               <button
